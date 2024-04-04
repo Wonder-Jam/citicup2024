@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
+
+<head>
+  <meta charset="utf-8">
+</head>
+
+<body style="height: 100%; margin: 0">
+  <div id="container" style="height: 100%"></div>
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts/5.5.0/files/dist/echarts.min.js"></script>
+
+  <!-- Uncomment this line if you want to dataTool extension
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts/5.5.0/files/dist/extension/dataTool.min.js"></script>
+  -->
+  <!-- Uncomment this line if you want to use gl extension
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts-gl/2/files/dist/echarts-gl.min.js"></script>
+  -->
+  <!-- Uncomment this line if you want to echarts-stat extension
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts-stat/latest/files/dist/ecStat.min.js"></script>
+  -->
+  <!-- Uncomment this line if you want to use map
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts/4.9.0/files/map/js/china.js"></script>
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts/4.9.0/files/map/js/world.js"></script>
+  -->
+  <!-- Uncomment these two lines if you want to use bmap extension
+  <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=YOUR_API_KEY"></script>
+  <script type="text/javascript" src="https://registry.npmmirror.com/echarts/5.5.0/files/dist/extension/bmap.min.js"></script>
+  -->
+
+  <script>
+    // 极坐标转换为笛卡尔坐标
+    function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+      let angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      };
+    }
+  </script>
+  <script type="text/javascript">
+    var dom = document.getElementById('container');
+    var myChart = echarts.init(dom, null, {
+      renderer: 'canvas',
+      useDirtyRect: false
+    });
+    var app = {};
+
+    var option;
+    // console.log(nodes);
+    let map = new Map();
+    map.set(1, "一");
+    map.set(2, "二");
+    map.set(3, "三");
+    map.set(4, "四");
+    map.set(5, "五");
+    map.set(6, "六");
+    map.set(7, "七");
+    map.set(8, "八");
+
+    function handleRender(nodesOrigin, edgesOrigin){
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let data = nodesOrigin;
+      let edges = edgesOrigin;
+      // 中心节点的名称，后面定义edge要用
+      let center = data[0].name;
+      // 边缘节点的数量，用于计算坐标
+      let num = data.length - 1;
+      // 计算坐标 圆心：(width / 2, height / 2), 半径：height / 3
+      let angleStep = 360 / num;
+
+      let nodes = [];
+      for (let i = 0; i < num; i++) {
+        let angle = i * angleStep;
+        let node = polarToCartesian(width / 2, height / 2, height / 3, angle);
+        nodes.push(node);
+      }
+
+      option = {
+        tooltip: {},
+        animationDurationUpdate: 1500,
+        animationEasingUpdate: 'quinticInOut',
+        series: [
+          {
+            type: 'graph',
+            layout: 'none',
+            symbolSize: 50,
+            roam: false,
+            label: {
+              show: true
+            },
+            // edgeSymbol: ['circle', 'arrow'],
+            edgeSymbolSize: [4, 10],
+            edgeLabel: {
+              fontSize: 20
+            },
+            data: data.map((item, index) => {
+              if (item.name === center) {
+                return {
+                  name: item.name.length > 9 ? item.name.substring(0,9)+'...' : item.name,
+                  id: item.name,
+                  label: {
+                    fontWeight: 'bolder',
+                    fontSize: 18,
+                  },
+                  symbol: 'circle',
+                  symbolSize: [190, 110],
+                  x: width / 2,
+                  y: height / 2,
+                  itemStyle: {
+                    color: '#7a9eff',
+                    borderColor: '#5682ec',
+                    borderWidth: 1
+                  },
+                  tooltip: {
+                    formatter: `
+                                <b>${item.name}</b>
+                                  <li><b>证监会行业 </b>${item.csrc_industry}</li>
+                                  <li><b>净利润（含少数股东损益） </b>${item.net_profit}</li>
+                                  <li><b>资产负债率 </b>${item.asset_liability_ratio}</li>
+                                  <li><b>总资产报酬率（ROA） </b>${item.roa}</li>
+                                  <li><b>净资产收益率（ROE） </b>${item.roe}</li>
+                              `
+                  }
+                }
+              } else {
+                let formatter = `<b>${edges[index-1].target}</b><br>`;
+                edges[index-1].relations.forEach((relation, i)=>{
+                  formatter += `<b>交易${map.get(i+1)}</b>`;
+                  formatter += `<li><b>金额 </b>${relation.transaction_amount} 万元</li>`
+                  formatter += `<li><b>币种 </b>${relation.currency}</li>`
+                  formatter += `<li><b>关联 </b>${relation.relationship}</li>`
+                  formatter += `<li><b>方式 </b>${relation.transaction_method}</li>`
+                })
+                // console.log(formatter)
+                return {
+                  name: item.name.length > 10 ? item.name.substring(0,10)+'...' : item.name,
+                  id: item.name,
+                  symbol: 'circle',
+                  symbolSize: [130, 60],
+                  tooltip: {
+                    formatter: formatter
+                  },
+                  x: nodes[index - 1].x,
+                  y: nodes[index - 1].y,
+                  itemStyle: {
+                    color: '#ffffff',
+                    borderColor: '7a9eff',
+                    borderWidth: 2
+                  },
+                }
+              }
+            }),
+            links: edges.map((item, index) => {
+              return {
+                source: index+1,
+                target: 0,
+              }
+            }),
+            lineStyle: {
+              opacity: 0.9,
+              width: 2,
+              curveness: 0
+            }
+          }
+        ]
+      };
+      if (option && typeof option === 'object') {
+        // console.log("option");
+        // console.log(option)
+        myChart.setOption(option);
+      }
+    }
+
+    window.addEventListener('message', function(event) {
+      switch (event.data.name){
+        case 'render':
+          handleRender(event.data.nodes, event.data.edges);
+          break;
+      }
+    })
+
+    window.addEventListener('resize', myChart.resize);
+
+  </script>
+</body>
+
+</html>
