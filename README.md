@@ -5,15 +5,15 @@
 > │      fund.html				ECharts 资金图
 > │      guarantee.html	  ECharts 担保交易图	
 > └─pages
->  ├─Equity
->  │      index.less
->  │      index.tsx
->  ├─Fund
->  │      index.less
->  │      index.tsx
->  └─Guarantee
->          index.less
->          index.tsx
+> 	├─Equity
+> 	│      index.less
+> 	│      index.tsx
+> 	├─Fund
+> 	│      index.less
+> 	│      index.tsx
+> 	└─Guarantee
+> 	        index.less
+> 	        index.tsx
 
 ## 参考
 
@@ -21,5 +21,5 @@
 
 新增功能：
 
-- 编辑状态和预览状态
-- 增加节点和删除节点
+- 编辑和预览状态
+- 支持在原图上增加节点和删除节点
